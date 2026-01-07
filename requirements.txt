@@ -1,0 +1,8 @@
+requests==2.31.0
+python-dotenv==1.0.0
+pyspark==3.5.0
+psycopg2-binary==2.9.9
+apache-airflow==2.7.3
+Flask==2.2.5
+SQLAlchemy==1.4.52
+pandas==2.1.3

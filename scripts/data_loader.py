@@ -1,0 +1,79 @@
+ 
+"""
+Data Loader for PostgreSQL
+Loads transformed data into the database using Spark JDBC.
+"""
+
+import os
+import logging
+from pyspark.sql import DataFrame
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class PostgresDataLoader:
+    """Loads data into PostgreSQL using Spark JDBC"""
+    
+    def __init__(self):
+        """Initialize database connection parameters"""
+        self.host = os.getenv('POSTGRES_HOST', 'localhost')
+        self.port = os.getenv('POSTGRES_PORT', '5432')
+        self.database = os.getenv('POSTGRES_DB', 'football_db')
+        self.user = os.getenv('POSTGRES_USER', 'postgres')
+        self.password = os.getenv('POSTGRES_PASSWORD', '')
+        
+        self.jdbc_url = f"jdbc:postgresql://{self.host}:{self.port}/{self.database}"
+        self.connection_properties = {
+            "user": self.user,
+            "password": self.password,
+            "driver": "org.postgresql.Driver"
+        }
+        
+        logger.info(f"PostgresDataLoader initialized for {self.host}:{self.port}/{self.database}")
+    
+    def load_dataframe(self, df: DataFrame, table_name: str, mode: str = "append") -> None:
+        """
+        Load a Spark DataFrame to PostgreSQL.
+        
+        Args:
+            df: Spark DataFrame to load
+            table_name: Target table name
+            mode: Write mode ('append', 'overwrite', 'ignore', 'error')
+        """
+        try:
+            logger.info(f"Loading {df.count()} rows to table: {table_name}")
+            
+            df.write.jdbc(
+                url=self.jdbc_url,
+                table=table_name,
+                mode=mode,
+                properties=self.connection_properties
+            )
+            
+            logger.info(f"Successfully loaded data to {table_name}")
+        except Exception as e:
+            logger.error(f"Failed to load data to {table_name}: {e}")
+            raise
+    
+    def load_dim_teams(self, df: DataFrame) -> None:
+        """Load teams dimension table"""
+        self.load_dataframe(df, "dim_teams", mode="overwrite")
+    
+    def load_dim_dates(self, df: DataFrame) -> None:
+        """Load dates dimension table"""
+        # append to accumulate dates over time
+        self.load_dataframe(df, "dim_dates", mode="append")
+    
+    def load_fact_matches(self, df: DataFrame) -> None:
+        """Load matches fact table"""
+        self.load_dataframe(df, "fact_matches", mode="append")
+    
+    def load_standings(self, df: DataFrame) -> None:
+        """Load standings table (snapshot)"""
+        self.load_dataframe(df, "standings_snapshot", mode="overwrite")
+
+
