@@ -66,7 +66,6 @@ class FootballDataTransformer:
         
         rows = []
         for match in matches:
-            # Handle score - could be None if match not played
             full_time = match.get('score', {}).get('fullTime', {})
             half_time = match.get('score', {}).get('halfTime', {})
             
@@ -160,7 +159,6 @@ class FootballDataTransformer:
         return date_df
     
     def stop(self):
-        """Stop Spark session"""
         self.spark.stop()
         logger.info("Spark session stopped")
 
