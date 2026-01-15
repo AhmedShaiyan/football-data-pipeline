@@ -18,11 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 def run_etl_pipeline(competition_code: str = "PL") -> bool:
-    logger.info("="*60)
     logger.info(f"Starting Football Data ETL Pipeline")
     logger.info(f"Competition: {competition_code}")
     logger.info(f"Timestamp: {datetime.now().isoformat()}")
-    logger.info("="*60)
     
     # Initialize components
     api_client = None
@@ -36,7 +34,6 @@ def run_etl_pipeline(competition_code: str = "PL") -> bool:
         loader = PostgresDataLoader()
         
         logger.info("\n" + "="*40)
-        logger.info("="*40)
         
         logger.info("Extracting teams data")
         teams_raw = api_client.get_teams(competition_code)
@@ -83,10 +80,9 @@ def run_etl_pipeline(competition_code: str = "PL") -> bool:
         logger.info("Loading standings snapshot...")
         loader.load_standings(standings_df)
         
-        # Completion log
-        logger.info("\n" + "="*60)
-        logger.info("ETL PIPELINE COMPLETED SUCCESSFULLY")
-        logger.info("="*60)
+        # Completion 
+        logger.info("ETL PIPELINE COMPLETED ")
+
         
         return True
         
@@ -106,6 +102,5 @@ if __name__ == "__main__":
     import os
     os.makedirs('logs', exist_ok=True)
     
-    # Runs the pipeline for Premier League (PL)
     success = run_etl_pipeline("PL")
     sys.exit(0 if success else 1)

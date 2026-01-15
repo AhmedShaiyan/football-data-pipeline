@@ -1,6 +1,17 @@
 import os
-os.environ['PYSPARK_PYTHON'] = 'python'
-os.environ['PYSPARK_DRIVER_PYTHON'] = 'python'
+import sys
+
+os.environ['PYSPARK_PYTHON'] = sys.executable
+os.environ['PYSPARK_DRIVER_PYTHON'] = sys.executable
+
+
+spark_temp = r'C:\Temp\spark_work'
+if not os.path.exists(spark_temp):
+    os.makedirs(spark_temp)
+os.environ['SPARK_LOCAL_DIRS'] = spark_temp
+os.environ['TEMP'] = spark_temp
+os.environ['TMP'] = spark_temp
+
 
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import (
@@ -22,19 +33,18 @@ logger = logging.getLogger(__name__)
 class FootballDataTransformer:
     
     def __init__(self):
-        jdbc_jar_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), 
-            "postgresql-42.7.4.jar"
-        )
+        jdbc_jar_path = r'C:\Java\postgresql-42.7.4.jar'
         
         self.spark = SparkSession.builder \
             .appName("FootballDataPipeline") \
             .config("spark.jars", jdbc_jar_path) \
             .config("spark.driver.extraClassPath", jdbc_jar_path) \
+            .config("spark.executor.extraClassPath", jdbc_jar_path) \
+            .config("spark.ui.showConsoleProgress", "false") \
+            .config("spark.driver.host", "localhost") \
             .getOrCreate()
         
-        # Set log level
-        self.spark.sparkContext.setLogLevel("WARN")
+        self.spark.sparkContext.setLogLevel("ERROR")
         logger.info("Spark session initialized successfully")
     
     def transform_teams(self, raw_data: dict) -> DataFrame:
@@ -114,24 +124,24 @@ class FootballDataTransformer:
         for standing_type in standings:
             for team in standing_type.get('table', []):
                 rows.append({
-                    'competition_id': competition.get('id'),
+                    'competition_id': competition.get('id', 0),
                     'competition_name': competition.get('name', ''),
-                    'season_id': season.get('id'),
-                    'season_start': season.get('startDate'),
-                    'season_end': season.get('endDate'),
+                    'season_id': season.get('id', 0),
+                    'season_start': season.get('startDate', ''),
+                    'season_end': season.get('endDate', ''),
                     'standing_type': standing_type.get('type', 'TOTAL'),
-                    'position': team.get('position'),
-                    'team_id': team.get('team', {}).get('id'),
+                    'position': team.get('position', 0),
+                    'team_id': team.get('team', {}).get('id', 0),
                     'team_name': team.get('team', {}).get('name', ''),
-                    'played_games': team.get('playedGames'),
-                    'won': team.get('won'),
-                    'draw': team.get('draw'),
-                    'lost': team.get('lost'),
-                    'goals_for': team.get('goalsFor'),
-                    'goals_against': team.get('goalsAgainst'),
-                    'goal_difference': team.get('goalDifference'),
-                    'points': team.get('points'),
-                    'form': team.get('form', '')
+                    'played_games': team.get('playedGames', 0),
+                    'won': team.get('won', 0),
+                    'draw': team.get('draw', 0),
+                    'lost': team.get('lost', 0),
+                    'goals_for': team.get('goalsFor', 0),
+                    'goals_against': team.get('goalsAgainst', 0),
+                    'goal_difference': team.get('goalDifference', 0),
+                    'points': team.get('points', 0),
+                    'form': team.get('form') or ''  # form can be None
                 })
         
         df = self.spark.createDataFrame(rows)
