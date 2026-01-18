@@ -112,7 +112,7 @@ class FootballDataTransformer:
                .withColumn('day_of_week', dayofweek(col('match_date'))) \
                .withColumn('loaded_at', current_timestamp())
         
-        logger.info(f"Transformed {df.count()} match records")
+        logger.info(f"{df.count()} match records")
         return df
     
     def transform_standings(self, raw_data: dict) -> DataFrame:
@@ -141,7 +141,7 @@ class FootballDataTransformer:
                     'goals_against': team.get('goalsAgainst', 0),
                     'goal_difference': team.get('goalDifference', 0),
                     'points': team.get('points', 0),
-                    'form': team.get('form') or ''  # form can be None
+                    'form': team.get('form') or ''
                 })
         
         df = self.spark.createDataFrame(rows)
@@ -173,29 +173,34 @@ class FootballDataTransformer:
         logger.info("Spark session stopped")
 
 
-# Test the transformer
-if __name__ == "__main__":
-    from api_client import FootballAPIClient
- 
-    client = FootballAPIClient()
-    transformer = FootballDataTransformer()
-    
-    try:
-        print("\n=== Testing Data Transformer ===")
-        teams_raw = client.get_teams("PL")
-        teams_df = transformer.transform_teams(teams_raw)
-        print("\nTeams DataFrame Schema:")
-        teams_df.printSchema()
-        print("\nSample Teams:")
-        teams_df.select('team_id', 'team_name', 'stadium').show(5, truncate=False)
+    def transform_scorers(self, raw_data: dict) -> DataFrame:
+        """Transform top scorers data"""
+        competition = raw_data.get('competition', {})
+        season = raw_data.get('season', {})
+        scorers = raw_data.get('scorers', [])
         
-        matches_raw = client.get_matches("PL")
-        matches_df = transformer.transform_matches(matches_raw)
-        print("\nMatches DataFrame Schema:")
-        matches_df.printSchema()
-        print("\nSample Matches:")
-        matches_df.select('match_id', 'home_team_name', 'away_team_name', 
-                         'home_score_fulltime', 'away_score_fulltime', 'status').show(5, truncate=False)
+        rows = []
+        for scorer in scorers:
+            player = scorer.get('player', {})
+            team = scorer.get('team', {})
+            
+            rows.append({
+                'competition_id': competition.get('id'),
+                'competition_name': competition.get('name', ''),
+                'season_id': season.get('id'),
+                'player_id': player.get('id'),
+                'player_name': player.get('name', ''),
+                'nationality': player.get('nationality', ''),
+                'team_id': team.get('id'),
+                'team_name': team.get('name', ''),
+                'goals': scorer.get('goals'),
+                'assists': scorer.get('assists'),
+                'penalties': scorer.get('penalties'),
+                'played_matches': scorer.get('playedMatches')
+            })
         
-    finally:
-        transformer.stop()
+        df = self.spark.createDataFrame(rows)
+        df = df.withColumn('loaded_at', current_timestamp())
+        
+        logger.info(f"{df.count()} scorer records")
+        return df
