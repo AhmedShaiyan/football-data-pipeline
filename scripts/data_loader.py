@@ -49,7 +49,7 @@ class PostgresDataLoader:
             raise
     
     def load_dim_teams(self, df: DataFrame) -> None:
-        self.load_dataframe(df, "dim_teams", mode="overwrite")
+        self.load_dataframe(df, "dim_teams", mode="append")
     
     def load_dim_dates(self, df: DataFrame) -> None:
         # append to accumulate dates over time
@@ -59,7 +59,7 @@ class PostgresDataLoader:
         self.load_dataframe(df, "fact_matches", mode="append")
     
     def load_standings(self, df: DataFrame) -> None:
-        self.load_dataframe(df, "standings_snapshot", mode="overwrite")
+        self.load_dataframe(df, "standings_snapshot", mode="append")
 
 
     def load_scorers(self, df: DataFrame) -> None:
