@@ -62,3 +62,5 @@ class PostgresDataLoader:
         self.load_dataframe(df, "standings_snapshot", mode="overwrite")
 
 
+    def load_scorers(self, df: DataFrame) -> None:
+        self.load_dataframe(df, "dim_scorers", mode="append")
