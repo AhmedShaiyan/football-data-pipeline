@@ -77,6 +77,26 @@ CREATE TABLE IF NOT EXISTS standings_snapshot (
     loaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS dim_scorers (
+    id SERIAL PRIMARY KEY,
+    competition_id INTEGER,
+    competition_name VARCHAR(100),
+    season_id INTEGER,
+    player_id INTEGER,
+    player_name VARCHAR(100),
+    nationality VARCHAR(50),
+    team_id INTEGER,
+    team_name VARCHAR(100),
+    goals INTEGER,
+    assists INTEGER,
+    penalties INTEGER,
+    played_matches INTEGER,
+    loaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_scorers_competition ON dim_scorers(competition_id);
+CREATE INDEX IF NOT EXISTS idx_scorers_team ON dim_scorers(team_id);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_matches_date ON fact_matches(match_date);
 CREATE INDEX IF NOT EXISTS idx_matches_home_team ON fact_matches(home_team_id);
