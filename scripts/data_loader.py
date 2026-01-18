@@ -18,8 +18,12 @@ class PostgresDataLoader:
         self.database = os.getenv('POSTGRES_DB', 'football_db')
         self.user = os.getenv('POSTGRES_USER', 'postgres')
         self.password = os.getenv('POSTGRES_PASSWORD', '')
+        self.sslmode = os.getenv('POSTGRES_SSLMODE', 'prefer')
         
-        self.jdbc_url = f"jdbc:postgresql://{self.host}:{self.port}/{self.database}"
+        self.jdbc_url = (
+            f"jdbc:postgresql://{self.host}:{self.port}/{self.database}"
+            f"?sslmode={self.sslmode}"
+        )
         self.connection_properties = {
             "user": self.user,
             "password": self.password,
