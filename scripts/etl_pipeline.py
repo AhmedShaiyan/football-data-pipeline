@@ -1,6 +1,7 @@
 import logging
 import sys
 from datetime import datetime
+from functools import reduce
 
 from api_client import FootballAPIClient
 from data_transformer import FootballDataTransformer
@@ -37,6 +38,8 @@ def run_etl_pipeline(competitions: list = None) -> bool:
         api_client = FootballAPIClient()
         transformer = FootballDataTransformer()
         loader = PostgresDataLoader()
+
+        all_dates_dfs = []
         
         for competition_code in competitions:
             logger.info("\n" + "="*50)
@@ -68,17 +71,28 @@ def run_etl_pipeline(competitions: list = None) -> bool:
             standings_df = transformer.transform_standings(standings_raw)
             scorers_df = transformer.transform_scorers(scorers_raw)
             dates_df = transformer.create_date_dimension(matches_df)
+
+            all_dates_dfs.append(dates_df)
             
             # LOAD 
             logger.info(f"[{competition_code}] Loading data to database")
             
             loader.load_dim_teams(teams_df)
-            loader.load_dim_dates(dates_df)
             loader.load_fact_matches(matches_df)
             loader.load_standings(standings_df)
             loader.load_scorers(scorers_df)
             
-            logger.info(f"[{competition_code}] ✅ Complete")
+            logger.info(f"[{competition_code}] Complete")
+
+            # Load dates
+            logger.info("Loading consolidated date dimension")
+        
+        # Union all date dataframes and deduplicate
+        all_dates = reduce(lambda df1, df2: df1.union(df2), all_dates_dfs)
+        unique_dates = all_dates.dropDuplicates(["date_id"])
+        
+        logger.info(f"Loading {unique_dates.count()} unique dates")
+        loader.load_dim_dates(unique_dates)
         
         logger.info("\n" + "="*50)
         logger.info("ETL PIPELINE COMPLETED SUCCESSFULLY")
