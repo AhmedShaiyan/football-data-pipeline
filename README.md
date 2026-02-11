@@ -80,18 +80,6 @@ from etl_pipeline import run_etl_pipeline
 run_etl_pipeline(["PL", "PD"])  # Premier League and La Liga only
 ```
 
-## Pipeline Details
-
-**Extract:** `FootballAPIClient` fetches JSON from REST API with error handling and logging
-
-**Transform:** `FootballDataTransformer` uses PySpark to:
-- Parse nested JSON structures
-- Create date dimensions from match timestamps
-- Deduplicate records across competitions
-- Add audit columns (loaded_at)
-
-**Load:** `PostgresDataLoader` writes DataFrames to PostgreSQL via JDBC with configurable modes (append/overwrite)
-
 ## Power BI Connection
 
 1. Install Npgsql driver (4.1.x)
