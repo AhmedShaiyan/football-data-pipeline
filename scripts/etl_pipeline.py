@@ -37,7 +37,7 @@ def run_etl_pipeline(competitions: list = None) -> bool:
         logger.info("Initializing pipeline components")
         api_client = FootballAPIClient()
         transformer = FootballDataTransformer()
-        loader = PostgresDataLoader()
+        loader = PostgresDataLoader(spark=transformer.spark)
 
         all_dates_dfs = []
         
@@ -74,24 +74,34 @@ def run_etl_pipeline(competitions: list = None) -> bool:
 
             all_dates_dfs.append(dates_df)
             
-            # LOAD 
+            # LOAD
             logger.info(f"[{competition_code}] Loading data to database")
-            
+
             loader.load_dim_teams(teams_df)
             loader.load_fact_matches(matches_df)
-            loader.load_standings(standings_df)
-            loader.load_scorers(scorers_df)
+
+            competition_id = standings_df.select('competition_id').first()[0]
+
+            if loader.snapshot_exists_today("standings_snapshot", competition_id):
+                logger.info(f"[{competition_code}] Standings snapshot already loaded today — skipping")
+            else:
+                loader.load_standings(standings_df)
+
+            if loader.snapshot_exists_today("dim_scorers", competition_id):
+                logger.info(f"[{competition_code}] Scorers snapshot already loaded today — skipping")
+            else:
+                loader.load_scorers(scorers_df)
             
             logger.info(f"[{competition_code}] Complete")
 
             # Load dates
             logger.info("Loading consolidated date dimension")
         
-        # Union all date dataframes and deduplicate
+        # Union all date dataframes, deduplicate within this run, then filter against DB
         all_dates = reduce(lambda df1, df2: df1.union(df2), all_dates_dfs)
         unique_dates = all_dates.dropDuplicates(["date_id"])
-        
-        logger.info(f"Loading {unique_dates.count()} unique dates")
+
+        logger.info(f"Checking for new dates to load")
         loader.load_dim_dates(unique_dates)
         
         logger.info("\n" + "="*50)
