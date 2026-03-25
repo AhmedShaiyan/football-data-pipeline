@@ -6,6 +6,7 @@ from functools import reduce
 from api_client import FootballAPIClient
 from data_transformer import FootballDataTransformer
 from data_loader import PostgresDataLoader
+from validators import validate_raw_response, validate_dataframe
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,27 +50,35 @@ def run_etl_pipeline(competitions: list = None) -> bool:
             # EXTRACT
             logger.info(f"[{competition_code}] Extracting teams data")
             teams_raw = api_client.get_teams(competition_code)
-            logger.info(f"[{competition_code}] Extracted {len(teams_raw.get('teams', []))} teams")
-            
+            validate_raw_response(teams_raw, "teams", competition_code)
+
             logger.info(f"[{competition_code}] Extracting matches data")
             matches_raw = api_client.get_matches(competition_code)
-            logger.info(f"[{competition_code}] Extracted {len(matches_raw.get('matches', []))} matches")
-            
+            validate_raw_response(matches_raw, "matches", competition_code)
+
             logger.info(f"[{competition_code}] Extracting standings data")
             standings_raw = api_client.get_standings(competition_code)
-            logger.info(f"[{competition_code}] Extracted standings data")
-            
+            validate_raw_response(standings_raw, "standings", competition_code)
+
             logger.info(f"[{competition_code}] Extracting scorers data")
             scorers_raw = api_client.get_scorers(competition_code)
-            logger.info(f"[{competition_code}] Extracted {len(scorers_raw.get('scorers', []))} scorers")
-            
-            # TRANSFORM 
+            validate_raw_response(scorers_raw, "scorers", competition_code)
+
+            # TRANSFORM
             logger.info(f"[{competition_code}] Transforming data")
-            
+
             teams_df = transformer.transform_teams(teams_raw)
+            validate_dataframe(teams_df, "team_id", competition_code)
+
             matches_df = transformer.transform_matches(matches_raw)
+            validate_dataframe(matches_df, "match_id", competition_code)
+
             standings_df = transformer.transform_standings(standings_raw)
+            validate_dataframe(standings_df, "team_id", competition_code)
+
             scorers_df = transformer.transform_scorers(scorers_raw)
+            validate_dataframe(scorers_df, "player_id", competition_code)
+
             dates_df = transformer.create_date_dimension(matches_df)
 
             all_dates_dfs.append(dates_df)
