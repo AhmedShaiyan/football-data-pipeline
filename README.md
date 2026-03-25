@@ -6,15 +6,11 @@ Interactive dashboard delivering football stats and analysis. Use it to track te
 - Top scorers leaderboard with goals, assists, and penalties
 - Home vs away performance analysis
 - Head-to-head team comparisons
-- Recent form tracking (last 5 matches)
+- Recent form tracking 
 - League filtering
   
 The dashboard is the downstream product of an End-to-end ETL pipeline extracting data from football-data.org API.
 
-## Pipeline Architecture
-```
-API (football-data.org) → Extract (Python) → Transform (PySpark) → Load (PostgreSQL) → Visualize (Power BI)
-```
 
 **Tech Stack:**
 - Python 3.x
@@ -22,16 +18,6 @@ API (football-data.org) → Extract (Python) → Transform (PySpark) → Load (P
 - PostgreSQL (Neon Cloud)
 - Power BI Desktop
 
-## Data Model
-
-**Dimension Tables:**
-- `dim_teams` - Team attributes (name, stadium, colors, founded)
-- `dim_dates` - Date dimension for time-based analysis
-
-**Fact Tables:**
-- `fact_matches` - Match results and scores
-- `standings_snapshot` - League standings snapshots
-- `dim_scorers` - Top scorers by competition
 
 **Competitions Covered:**
 - Premier League (England)
@@ -77,7 +63,7 @@ python scripts/etl_pipeline.py
 Run for specific competitions:
 ```python
 from etl_pipeline import run_etl_pipeline
-run_etl_pipeline(["PL", "PD"])  # Premier League and La Liga only
+run_etl_pipeline(["PL", "PD"])  
 ```
 
 ## Power BI Connection
@@ -88,7 +74,6 @@ run_etl_pipeline(["PL", "PD"])  # Premier League and La Liga only
 
 ## Future Enhancements
 
-- Incremental loads (process only new matches since last run)
 - Airflow scheduling for automated daily refreshes
 - Additional leagues (Serie A, Ligue 1)
 - Advanced metrics (xG, possession stats)
