@@ -8,6 +8,21 @@ Interactive dashboard delivering football stats and analysis. Use it to track te
 - Head-to-head team comparisons
 - Recent form tracking 
 - League filtering
+
+## Dashboard Preview
+
+**League Overview**
+![League Overview](screenshots/league-overview.png)
+
+**Top Scorers**
+![Top Scorers](screenshots/top-scorers.png)
+
+**Team Deep Dive**
+![Team Deep Dive](screenshots/team-deep-dive.png)
+
+**Head-to-Head**
+![Head-to-Head](screenshots/head-to-head.png)
+
   
 The dashboard is the downstream product of an End-to-end ETL pipeline extracting data from football-data.org API.
 
